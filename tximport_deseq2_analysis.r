@@ -79,6 +79,7 @@ volcanoplot <- function (res, lfcthresh=2, sigthresh=0.05, main="Volcano Plot", 
 samples <- read.table("samples.txt", header=FALSE)
 samples$drug <- factor(rep(c("C18","CD1530","DMSO","DORSO","K9499","SALER","VX661","VX809","WITHA","XL147"),each=4))
 samples$day <- factor(rep(c("a","b","a","b","b","a","a","a","b","b"),each = 4))  ## day is confounded with drug, so this is not really useful
+samples$replicate <- factor(rep(c("rep1","rep2","rep3","rep4"),each = 10))
 names(samples) <- c("sample","drug","day")
 rownames(samples) <- samples$sample
 
@@ -111,9 +112,27 @@ pcaExplorer(dds=ddsTxi,annotation=anno,rlt=rldTxi)
 ## look at dispersion estimates 
 plotDispEsts(ddsTxi)
 
+## drop day 2 batch for PCA reanalysis 
 ddsTxi_batch1 <- ddsTxi[,ddsTxi@colData$day == "a"]
 ddsTxi_batch1@colData$drug <- droplevels(ddsTxi_batch1@colData$drug)
+
+## add replicate metadata
+ddsTxi_batch1@colData$rep <- as.factor(rep(c("one","two","three","four"), times = 5))
 ddsTxi_batch1 <- DESeq(ddsTxi_batch1)
 
 rldTxi_batch1 <- rlog(ddsTxi_batch1, blind = FALSE)
 pcaExplorer(dds = ddsTxi_batch1, annotation = anno, rlt = rldTxi_batch1)
+
+## DE analysis 
+
+res <- results(ddsTxi, contrast = c("drug","WITHA","DMSO"))
+res <- na.omit(res)  #drop NA rows
+res_sig <- res[res$padj < 0.05 & res$baseMean > 5.0,]
+res_ord <- res_sig[order(res_sig$padj),]
+res_ord$ext_gene <- anno[row.names(res_ord), "gene_name"]
+
+png("test.png", 1200, 1500, pointsize=20, res=100)
+volcanoplot(res_ord, main = "Volcano Plot:", lfcthresh=1.0, sigthresh=0.1, textcx=.1, xlim=c(-12, 12), ylim = c(0,300))
+dev.off()
+
+
