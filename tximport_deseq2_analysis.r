@@ -103,26 +103,6 @@ ddsTxi$drug <- relevel(ddsTxi$drug, ref ='DMSO')
 
 ddsTxi <- DESeq(ddsTxi)
 
-##---------------launch PCA Explorer on dds object 
-anno <- get_annotation(ddsTxi, 'hsapiens_gene_ensembl','ensembl_gene_id')
-anno <- na.omit(anno)
-rldTxi <- rlog(ddsTxi, blind=FALSE)
-pcaExplorer(dds=ddsTxi,annotation=anno,rlt=rldTxi)
-
-## look at dispersion estimates 
-plotDispEsts(ddsTxi)
-
-## drop day 2 batch for PCA reanalysis 
-ddsTxi_batch1 <- ddsTxi[,ddsTxi@colData$day == "a"]
-ddsTxi_batch1@colData$drug <- droplevels(ddsTxi_batch1@colData$drug)
-
-## add replicate metadata
-ddsTxi_batch1@colData$rep <- as.factor(rep(c("one","two","three","four"), times = 5))
-ddsTxi_batch1 <- DESeq(ddsTxi_batch1)
-
-rldTxi_batch1 <- rlog(ddsTxi_batch1, blind = FALSE)
-pcaExplorer(dds = ddsTxi_batch1, annotation = anno, rlt = rldTxi_batch1)
-
 ## DE analysis 
 
 res <- results(ddsTxi, contrast = c("drug","WITHA","DMSO"))
@@ -136,3 +116,51 @@ volcanoplot(res_ord, main = "Volcano Plot:", lfcthresh=1.0, sigthresh=0.1, textc
 dev.off()
 
 
+##---------------launch PCA Explorer on dds object 
+anno <- get_annotation(ddsTxi, 'hsapiens_gene_ensembl','ensembl_gene_id')
+anno <- na.omit(anno)
+rldTxi <- rlog(ddsTxi, blind=FALSE)
+pcaExplorer(dds=ddsTxi,annotation=anno,rlt=rldTxi)
+
+## look at dispersion estimates 
+plotDispEsts(ddsTxi)
+
+#######
+## drop day 2 batches and account for rep 2 batch effect
+#######
+
+## drop day 2 batch for PCA reanalysis 
+ddsTxi_batch1 <- ddsTxi[,ddsTxi@colData$day == "a"]
+ddsTxi_batch1@colData$drug <- droplevels(ddsTxi_batch1@colData$drug)
+
+## add replicate metadata
+ddsTxi_batch1@colData$rep <- as.factor(rep(c("one","two","three","four"), times = 5))
+ddsTxi_batch1@design <- ~drug + rep
+ddsTxi_batch1 <- DESeq(ddsTxi_batch1)
+
+rldTxi_batch1 <- rlog(ddsTxi_batch1, blind = FALSE)
+pcaExplorer(dds = ddsTxi_batch1, annotation = anno, rlt = rldTxi_batch1)
+
+res_saler <- results(ddsTxi_batch1, contrast = c("drug", "SALER", "DMSO"))
+res_saler <- na.omit(res_saler)
+res_saler_sig <- res_saler[res_saler$padj < 0.05 & res_saler$baseMean > 5.0, ]
+res_saler_ord <- res_saler_sig[order(res_saler_sig$padj),]
+res_saler_ord$ext_gene <- anno[row.names(res_saler_ord), "gene_name"]
+
+res_vx661 <- results(ddsTxi_batch1, contrast = c("drug", "VX661", "DMSO"))
+res_vx661 <- na.omit(res_vx661)
+res_vx661_sig <- res_vx661[res_vx661$padj < 0.05 & res_vx661$baseMean > 5.0, ]
+res_vx661_ord <- res_vx661_sig[order(res_vx661_sig$padj),]
+res_vx661_ord$ext_gene <- anno[row.names(res_vx661_ord), "gene_name"]
+
+res_vx809 <- results(ddsTxi_batch1, contrast = c("drug", "VX809", "DMSO"))
+res_vx809 <- na.omit(res_vx809)
+res_vx809_sig <- res_vx809[res_vx809$padj < 0.05 & res_vx809$baseMean > 5.0, ]
+res_vx809_ord <- res_vx809_sig[order(res_vx809_sig$padj),]
+res_vx809_ord$ext_gene <- anno[row.names(res_vx809_ord), "gene_name"]
+
+res_c18 <- results(ddsTxi_batch1, contrast = c("drug", "C18", "DMSO"))
+res_c18 <- na.omit(res_c18)
+res_c18_sig <- res_c18[res_c18$padj < 0.05 & res_c18$baseMean > 5.0, ]
+res_c18_ord <- res_c18_sig[order(res_c18_sig$padj),]
+res_c18_ord$ext_gene <- anno[row.names(res_c18_ord), "gene_name"]
