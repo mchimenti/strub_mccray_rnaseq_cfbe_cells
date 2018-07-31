@@ -164,3 +164,31 @@ res_c18 <- na.omit(res_c18)
 res_c18_sig <- res_c18[res_c18$padj < 0.05 & res_c18$baseMean > 5.0, ]
 res_c18_ord <- res_c18_sig[order(res_c18_sig$padj),]
 res_c18_ord$ext_gene <- anno[row.names(res_c18_ord), "gene_name"]
+
+## Volcano plots 
+
+png("volcano_C18_FDR_0p1.png", 1200, 1500, pointsize=20, res=100)
+volcanoplot(res_c18_ord, main = "Volcano Plot: C18 vs DMSO, FDR p < 0.1", lfcthresh=1.0, sigthresh=0.1, textcx=1, xlim=c(-10, 10), ylim = c(4,20))
+dev.off()
+
+png("volcano_vx661_FDR_0p1.png", 1200, 1500, pointsize=20, res=100)
+volcanoplot(res_vx661_ord, main = "Volcano Plot: VX661 vs DMSO, FDR p < 0.1", lfcthresh=1.0, sigthresh=0.1, textcx=0.75, xlim=c(-10, 10), ylim = c(3,40))
+dev.off()
+
+png("volcano_vx809_FDR_0p1.png", 1200, 1500, pointsize=20, res=100)
+volcanoplot(res_vx809_ord, main = "Volcano Plot: vx809 vs DMSO FDR < 0.1", lfcthresh=1.0, sigthresh=0.1, textcx=0.75, xlim=c(-10, 10), ylim = c(3,9))
+dev.off()
+
+png("volcano_salerimide_FDR_0p1.png", 1200, 1500, pointsize=20, res=100)
+volcanoplot(res_saler_ord, main = "Volcano Plot: Salermide vs DMSO, FDR < 0.1", lfcthresh=0.75, sigthresh=0.1, textcx=1, xlim=c(-3, 3), ylim = c(2,15))
+dev.off()
+
+## write results 
+
+my_cols <- c("baseMean","log2FoldChange","padj","ext_gene")
+write.csv(x = res_c18_ord[,my_cols], file = "DE_genes_C18_DMSO_padj_0p05.csv")
+write.csv(x = res_vx809_ord[,my_cols], file = "DE_genes_vx809_padj_0p05.csv")
+write.csv(x = res_vx661_ord[,my_cols], file = "DE_genes_vx661_padj_0p05.csv")
+write.csv(x = res_saler_ord[,my_cols], file = "DE_genes_salermide_padj_0p05.csv")
+
+
